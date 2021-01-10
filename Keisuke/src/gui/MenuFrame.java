@@ -7,6 +7,8 @@ import java.awt.event.ComponentEvent;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 
+import logic.GameState;
+
 /**
  * @desc Frame that displays the menu.
  * @author vilip
@@ -20,24 +22,20 @@ public class MenuFrame extends JFrame {
 	private static final long serialVersionUID = 5469304007304180616L;
 	
 	/**
-	 * @desc Declaring menu buttons.
+	 * @desc Buttons.
 	 */
-	JButton new_button, open_button, option_button, help_button, exit_button;
+	private JButton new_button, open_button, option_button, help_button, exit_button;
 	
 	/**
-	 * @desc Menu dimensions.
-	 */
-	private Dimension frame_size;
-	
-	/**
-	 * @desc Preparing and adding components to frame.
+	 * @desc Preparing and adding components to menu frame.
+	 * @env GameState.FRAME_SIZE
 	 * @env new_button, open_button, option_button, help_button, exit_button.
 	 */
 	public MenuFrame() {
 		this.setTitle("Keisuke - Menu");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setLayout(null);
-		this.setSize(400, 400);
+		this.setSize(GameState.FRAME_SIZE);
 		this.setResizable(true);
 		this.setLocationRelativeTo(null);
 		this.getRootPane().addComponentListener(new ComponentAdapter() {
@@ -58,7 +56,14 @@ public class MenuFrame extends JFrame {
 		help_button.setFocusable(false);
 		exit_button.setFocusable(false);
 		
-		exit_button.addActionListener(e -> exit());
+		new_button.addActionListener(e -> {
+			this.dispose();
+			new SetupFrame();
+		});
+		exit_button.addActionListener(e -> {
+			this.dispose();
+			System.exit(0);
+		});
 		
 		this.getContentPane().add(new_button);
 		this.getContentPane().add(open_button);
@@ -75,12 +80,13 @@ public class MenuFrame extends JFrame {
 	 * @env new_button, open_button, option_button, help_button, exit_button.
 	 */
 	private void resize_components() {
-		frame_size = new Dimension(this.getContentPane().getSize());
-		int button_width = (int) (frame_size.getWidth() * 0.4);
-		int button_height = (int) (frame_size.getHeight() * 0.12);
-		int left_offset = (int) (frame_size.getWidth() * 0.3);
-		int top_offest = (int) (frame_size.getHeight() * 0.175);
-		int top_margin = (int) (frame_size.getHeight() * 0.01);
+		GameState.FRAME_SIZE = new Dimension(this.getSize());
+		Dimension content_pane_size = new Dimension(this.getContentPane().getSize());
+		int button_width = (int) (content_pane_size.getWidth() * 0.4);
+		int button_height = (int) (content_pane_size.getHeight() * 0.12);
+		int left_offset = (int) (content_pane_size.getWidth() * 0.3);
+		int top_offest = (int) (content_pane_size.getHeight() * 0.175);
+		int top_margin = (int) (content_pane_size.getHeight() * 0.01);
 		new_button.setBounds(left_offset, top_offest + 0 * (button_height + top_margin),
 				button_width, button_height);
 		open_button.setBounds(left_offset, top_offest + 1 * (button_height + top_margin),
@@ -91,11 +97,6 @@ public class MenuFrame extends JFrame {
 				button_width, button_height);
 		exit_button.setBounds(left_offset, top_offest + 4 * (button_height + top_margin),
 				button_width, button_height);
-	}
-	
-	private void exit() {
-		this.dispose();
-		System.exit(0);
 	}
 	
 }
