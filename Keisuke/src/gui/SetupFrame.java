@@ -1,20 +1,23 @@
 package gui;
 
-import java.awt.Dimension;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JSlider;
 
 import logic.GameState;
+import logic.Grid;
 
 /**
  * @desc Frame that displays the setup menu for the game.
  * @author vilip
- * @date 7.1.2021
  */
 public class SetupFrame extends JFrame {
 
@@ -26,7 +29,7 @@ public class SetupFrame extends JFrame {
 	/**
 	 * @desc Labels.
 	 */
-	private JLabel rows_label, cols_label;
+	private JLabel rows_label, cols_label, black_squares_label, endless_label;
 	
 	/**
 	 * @desc Buttons for navigation.
@@ -34,31 +37,44 @@ public class SetupFrame extends JFrame {
 	private JButton back_button, continue_button;
 	
 	/**
-	 * @desc Combo boxes containing possible grid sizes.
+	 * @desc Combo Boxes containing possible grid sizes.
 	 */
 	private JComboBox<Integer> rows_combobox, cols_combobox;
+	
+	/**
+	 * @desc Slider for black square percentage.
+	 */
+	private JSlider black_squares_slider;
+	
+	/**
+	 * @desc Check Box for endless mode.
+	 */
+	private JCheckBox endless_checkbox;
 
 	/**
-	 * @desc Preparing and adding components to menu frame.
-	 * @env this.rows_label, this.cols_label
-	 * @env this.rows_combobox, this.cols_combobox
+	 * @desc Preparing and adding components to setup frame.
+	 * @env this.rows_label, this.rows_combobox
+	 * @env this.cols_label, this.cols_combobox
 	 * @env this.back_button, this.continue_button
+	 * @env this.black_squares_label, this.black_squares_slider
+	 * @env this.endless_label, this.endless_checkbox
 	 */
 	public SetupFrame() {
 		this.setTitle("Keisuke - Setup");
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setLayout(null);
-		this.setSize(400, 200);
-		this.setResizable(true);
+		this.setSize(450, 210);
+		this.setResizable(false);
 		this.setLocationRelativeTo(null);
-		this.getRootPane().addComponentListener(new ComponentAdapter() {
-            public void componentResized(ComponentEvent e) {
-                resize_components();
-            }
-        });
+		this.setLayout(new GridBagLayout());
+		
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.insets = new Insets(5, 5, 0, 5);
 		
 		rows_label = new JLabel("Rows: ");
 		cols_label = new JLabel("Columns: ");
+		endless_label = new JLabel("Endless mode: ");
+		black_squares_label = new JLabel("Black squares percentage: ");
 		
 		Integer[] rows_values = new Integer[GameState.MAX_ROWS-GameState.MIN_ROWS+1];
 		for (int i = 0; i < rows_values.length; i++) {
@@ -72,6 +88,14 @@ public class SetupFrame extends JFrame {
 		rows_combobox = new JComboBox<Integer>(rows_values);
 		cols_combobox = new JComboBox<Integer>(cols_values);
 		
+		black_squares_slider = new JSlider(JSlider.HORIZONTAL, 0, 100, 20);
+		black_squares_slider.setPaintTicks(true);
+		black_squares_slider.setPaintLabels(true);
+		black_squares_slider.setMajorTickSpacing(20);
+		black_squares_slider.setMinorTickSpacing(5);
+		
+		endless_checkbox = new JCheckBox();
+		
 		back_button = new JButton("Back");
 		continue_button = new JButton("Continue");
 		
@@ -83,50 +107,48 @@ public class SetupFrame extends JFrame {
 			new MenuFrame();
 		});
 		continue_button.addActionListener(e -> {
+			game_setup();
 			this.dispose();
+			new GameFrame();
 		});
 		
-		this.getContentPane().add(rows_label);
-		this.getContentPane().add(rows_combobox);
-		this.getContentPane().add(cols_label);
-		this.getContentPane().add(cols_combobox);
-		this.getContentPane().add(back_button);
-		this.getContentPane().add(continue_button);
+		JComponent[] components = {
+				rows_label, rows_combobox,
+				cols_label, cols_combobox,
+				black_squares_label, black_squares_slider,
+				endless_label, endless_checkbox,
+				back_button, continue_button
+		};
+		
+		for (int i = 0; i < components.length; i+=2) {
+			gbc.gridy = i;
+			gbc.weightx = 0.4;
+			gbc.gridx = 0;
+			this.add(components[i], gbc);
+			gbc.weightx = 0.6;
+			gbc.gridx = 1;
+			this.add(components[i+1], gbc);
+		}
 		
 		this.setVisible(true);
 	}
 	
 	/**
-	 * @desc Resizing components on frame resize.
-	 * @evn GameState.FRAME_SIZE
-	 * @env this.rows_label, this.cols_label
-	 * @env this.rows_combobox, this.cols_combobox
-	 * @env this.back_button, this.continue_button
+	 * @desc Set-up game state with chosen options.
+	 * @env
 	 */
-	private void resize_components() {
-		Dimension content_pane_size = new Dimension(this.getContentPane().getSize());
-		int border_offset = 10;
-		int labels_width = (int) (content_pane_size.getWidth() * 0.4);
-		int labels_height = 20;
-		int combobox_width = (int) (content_pane_size.getWidth() * 0.4);
-		int combobox_height = 20;
-		int button_width = (int) (content_pane_size.getWidth() * 0.25);
-		int button_height = (int) (content_pane_size.getWidth() * 0.075);
-		int top_margin = (int) (content_pane_size.getHeight() * 0.01);
-		rows_label.setBounds(border_offset, border_offset, labels_width, labels_height);
-		cols_label.setBounds((int) content_pane_size.getWidth() - labels_width - border_offset,
-				border_offset, labels_width, labels_height);
-		rows_combobox.setBounds(border_offset, border_offset + labels_height + top_margin,
-				combobox_width, combobox_height);
-		cols_combobox.setBounds((int) content_pane_size.getWidth() - combobox_width - border_offset,
-				border_offset + labels_height + top_margin,
-				combobox_width, combobox_height);
-		back_button.setBounds(border_offset,
-				(int) content_pane_size.getHeight() - button_height - border_offset,
-				button_width, button_height);
-		continue_button.setBounds((int) content_pane_size.getWidth() - button_width - border_offset,
-				(int) content_pane_size.getHeight() - button_height - border_offset,
-				button_width, button_height);
+	public void game_setup() {
+		GameState.ROWS = (int) this.rows_combobox.getSelectedItem();
+		GameState.COLS = (int) this.cols_combobox.getSelectedItem();
+		GameState.BLACK_SQUARES_PERCENTAGE = black_squares_slider.getValue() / 100.0;
+		GameState.ENDLESS = this.endless_checkbox.isSelected();
+		GameState.PLAYING_GRID = new Grid();
+		GameState.PLAYING_GRID.fill_black_squares();
+		GameState.SOLVED_GRID = new Grid(GameState.PLAYING_GRID.get());
+		GameState.SOLVED_GRID.fill_random();
+		GameState.SOLVED_GRID.print();
+		GameState.ACROSS_VALUES = GameState.SOLVED_GRID.get_across();
+		GameState.DOWN_VALUES = GameState.SOLVED_GRID.get_down();
 	}
 	
 }
