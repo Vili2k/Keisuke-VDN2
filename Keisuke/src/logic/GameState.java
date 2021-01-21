@@ -39,4 +39,9 @@ public abstract class GameState {
 	 */
 	public static TreeMap<Integer, ArrayList<String>> ACROSS_VALUES, DOWN_VALUES;
 	
+	/**
+	 * @desc Contains time since start.
+	 */
+	public static int TIME;
+	
 }

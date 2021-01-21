@@ -22,7 +22,7 @@ import logic.Grid;
 public class SetupFrame extends JFrame {
 
 	/**
-	 * @desc Randomly generated serial version UID
+	 * @desc Randomly generated serial version UID.
 	 */
 	private static final long serialVersionUID = 4120194782201821752L;
 	
@@ -146,7 +146,6 @@ public class SetupFrame extends JFrame {
 		GameState.PLAYING_GRID.fill_black_squares();
 		GameState.SOLVED_GRID = new Grid(GameState.PLAYING_GRID.get());
 		GameState.SOLVED_GRID.fill_random();
-		GameState.SOLVED_GRID.print();
 		GameState.ACROSS_VALUES = GameState.SOLVED_GRID.get_across();
 		GameState.DOWN_VALUES = GameState.SOLVED_GRID.get_down();
 	}

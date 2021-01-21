@@ -104,20 +104,38 @@ public class Grid {
 	}
 	
 	/**
+	 * @desc Compares this grid with passed grid.
+	 * @return if grids are equal
+	 * @env GameState.ROWS, GameState.COLS
+	 * @env this.g
+	 */
+	public boolean compare(char[][] g) {
+		for (int y = 0; y < GameState.ROWS; y++) {
+			for (int x = 0; x < GameState.COLS; x++) {
+				if (this.g[y][x] != g[y][x]) return false;
+			}
+		}
+		return true;
+	}
+	
+	/**
 	 * @desc Expands grid in y and x direction.
+	 * @pre GameState.ROWS and GameState.COLS increased beforehand.
 	 * @env GameState.ROWS, GameState.COLS
 	 * @env this.g
 	 */
 	public void expand() {
-		char[][] new_g = new char[GameState.ROWS + 1][GameState.COLS + 1];
+		char[][] new_g = new char[GameState.ROWS][GameState.COLS];
 		for (int y = 0; y < GameState.ROWS; y++) {
 			for (int x = 0; x < GameState.COLS; x++) {
-				new_g[y][x] = g[y][x];
+				if (y < GameState.ROWS - 1 && x < GameState.COLS - 1) {
+					new_g[y][x] = this.g[y][x];
+				} else {
+					new_g[y][x] = '-';
+				}
 			}
 		}
 		this.g = new_g;
-		GameState.ROWS++;
-		GameState.COLS++;
 	}
 	
 	/**
@@ -138,6 +156,20 @@ public class Grid {
 	 */
 	public void set(int y, int x, char c) {
 		this.g[y][x] = c;
+	}
+	
+	/**
+	 * @desc Clears all values in the grid.
+	 * @env this.g
+	 */
+	public void reset() {
+		for (int y = 0; y < GameState.ROWS; y++) {
+			for (int x = 0; x < GameState.COLS; x++) {
+				if (this.g[y][x] != '#') {
+					this.g[y][x] = '-';
+				}
+			}
+		}
 	}
 	
 	/**
@@ -190,13 +222,7 @@ public class Grid {
 			ArrayList<String> values = across_values.get(key);
 			Collections.sort(across_values.get(key));
 			across_values.replace(key, values);
-			System.out.print(key + ": ");
-			for (String s : values) {
-				System.out.print(s + ", ");
-			}
-			System.out.println();
 		}
-		System.out.println();
 		return across_values;
 	}
 	
@@ -250,11 +276,6 @@ public class Grid {
 			ArrayList<String> values = down_values.get(key);
 			Collections.sort(down_values.get(key));
 			down_values.replace(key, values);
-			System.out.print(key + ": ");
-			for (String s : values) {
-				System.out.print(s + ", ");
-			}
-			System.out.println();
 		}
 		System.out.println();
 		return down_values;
