@@ -14,10 +14,18 @@ public class SolutionFrame extends JFrame {
 	 */
 	private static final long serialVersionUID = 3947245963486290903L;
 	
+	/**
+	 * @desc Solved grid panel.
+	 */
 	private GridPanel grid_panel;
 
+	/**
+	 * @desc Preparing and adding components to solution frame.
+	 * @env this.grid_panel
+	 */
 	public SolutionFrame() {
 		this.setTitle("Keisuke - Solution");
+		this.setIconImage(GameState.LOGO_ICON.getImage());
 		this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		this.setSize(500, 500);
 		this.setResizable(true);

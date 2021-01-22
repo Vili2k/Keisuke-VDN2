@@ -1,7 +1,9 @@
 package gui;
 
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.Point;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -10,7 +12,6 @@ import java.awt.event.MouseWheelListener;
 
 import javax.swing.JPanel;
 import javax.swing.JTextField;
-import javax.swing.SwingUtilities;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -47,6 +48,11 @@ public class GridPanel extends JPanel {
 	
 	private double min_zoom, max_zoom;
 	
+	/**
+	 * @desc Constructs a grid panel with passed grid.
+	 * @param g - passed grid
+	 * @env this.g
+	 */
 	public GridPanel(Grid g) {
 		this.setBorder(new LineBorder(Color.BLACK, 1));
 		this.setOpaque(false);
@@ -54,27 +60,15 @@ public class GridPanel extends JPanel {
 		
 		this.g = g;
 		
-		grid_cells = new JTextField[GameState.ROWS][GameState.COLS];
-		for (int y = 0; y < GameState.ROWS; y++) {
-			for (int x = 0; x < GameState.COLS; x++) {
-				grid_cells[y][x] = new JTextField();
-				grid_cells[y][x].setDocument(new JTextFieldLimit(1));
-				if (g.get()[y][x] == '#') {
-					grid_cells[y][x].setBackground(Color.BLACK);
-					grid_cells[y][x].setEditable(false);
-				} else if (g.get()[y][x] != '-') {
-					grid_cells[y][x].setText(g.get()[y][x] + "");
-				}
-				grid_cells[y][x].setHorizontalAlignment(JTextField.CENTER);
-				grid_cells[y][x].addMouseListener(new ComponentClickedListener());
-				grid_cells[y][x].addMouseMotionListener(new ComponentDraggedListener());
-				grid_cells[y][x].addMouseWheelListener(new ComponentZoomedListener());
-				grid_cells[y][x].getDocument().addDocumentListener(new TextFieldChangedListener());
-				this.add(grid_cells[y][x]);
-			}
-		}
+		fill_grid_cells();
 	}
 	
+	/**
+	 * @desc Resets current playing grid and timer.S
+	 * @env this.grid_cells, this.g
+	 * @env GameState.TIME, GameState.TIMER,
+	 * @env GameState.ROWS, GameState.COLS,
+	 */
 	public void reset() {
 		for (int y = 0; y < GameState.ROWS; y++) {
 			for (int x = 0; x < GameState.COLS; x++) {
@@ -82,12 +76,34 @@ public class GridPanel extends JPanel {
 				GameState.PLAYING_GRID.reset();
 			}
 		}
+		game_update();
+		set_editable();
+		GameState.TIME = 0;
+		GameState.TIMER.start();
 	}
 	
+	/**
+	 * @desc Sets grid cells to un-editable.
+	 * @env this.grid_cells,
+	 * @env GameState.ROWS, GameState.COLS
+	 */
 	public void set_uneditable() {
 		for (int y = 0; y < GameState.ROWS; y++) {
 			for (int x = 0; x < GameState.COLS; x++) {
 				grid_cells[y][x].setEditable(false);;
+			}
+		}
+	}
+	
+	/**
+	 * @desc Sets grid cells to editable.
+	 * @env this.grid_cells,
+	 * @env GameState.ROWS, GameState.COLS
+	 */
+	public void set_editable() {
+		for (int y = 0; y < GameState.ROWS; y++) {
+			for (int x = 0; x < GameState.COLS; x++) {
+				grid_cells[y][x].setEditable(true);;
 			}
 		}
 	}
@@ -136,6 +152,7 @@ public class GridPanel extends JPanel {
 				} else {
 					GameState.PLAYING_GRID.set(y, x, '-');
 				}
+				grid_cells[y][x].setBackground(Color.WHITE);
 			}
 		}
 		if (GameState.PLAYING_GRID.compare(GameState.SOLVED_GRID.get())) {
@@ -147,36 +164,60 @@ public class GridPanel extends JPanel {
 				GameState.SOLVED_GRID = new Grid(GameState.PLAYING_GRID.get());
 				GameState.SOLVED_GRID.fill_random();
 				GameState.ACROSS_VALUES = GameState.SOLVED_GRID.get_across();
-				GameState.ACROSS_VALUES = GameState.SOLVED_GRID.get_down();
+				GameState.DOWN_VALUES = GameState.SOLVED_GRID.get_down();
 				
-				GameFrame game_frame = (GameFrame) SwingUtilities.getRoot(this);
-				game_frame.setup_values_panel();
+				fill_grid_cells();
 				
-				this.removeAll();
-				grid_cells = new JTextField[GameState.ROWS][GameState.COLS];
-				for (int y = 0; y < GameState.ROWS; y++) {
-					for (int x = 0; x < GameState.COLS; x++) {
-						grid_cells[y][x] = new JTextField();
-						grid_cells[y][x].setDocument(new JTextFieldLimit(1));
-						if (g.get()[y][x] == '#') {
-							grid_cells[y][x].setBackground(Color.BLACK);
-							grid_cells[y][x].setEditable(false);
-						} else if (g.get()[y][x] != '-') {
-							grid_cells[y][x].setText(g.get()[y][x] + "");
-						}
-						grid_cells[y][x].setHorizontalAlignment(JTextField.CENTER);
-						grid_cells[y][x].addMouseListener(new ComponentClickedListener());
-						grid_cells[y][x].addMouseMotionListener(new ComponentDraggedListener());
-						grid_cells[y][x].addMouseWheelListener(new ComponentZoomedListener());
-						grid_cells[y][x].getDocument().addDocumentListener(new TextFieldChangedListener());
-						this.add(grid_cells[y][x]);
-					}
-				}
-				update_bounds();
-				game_update();
+				Dimension game_frame_size = GameState.GAME_FRAME.getSize();
+				Point game_frame_pos = GameState.GAME_FRAME.getLocation();
+				GameState.GAME_FRAME.dispose();
+				GameState.GAME_FRAME = new GameFrame();
+				GameState.GAME_FRAME.setSize(game_frame_size);
+				GameState.GAME_FRAME.setLocation(game_frame_pos);
 			} else {
-				System.out.println("gj you win");
 				set_uneditable();
+				if (GameState.TIMER != null) GameState.TIMER.stop();
+				new VictoryFrame();
+			}
+		}
+		if (GameState.SAVED) {
+			if (GameState.GAME_FRAME != null) GameState.GAME_FRAME.save_game_state();
+		}
+	}
+	
+	private void fill_grid_cells() {
+		this.removeAll();
+		grid_cells = new JTextField[GameState.ROWS][GameState.COLS];
+		for (int y = 0; y < GameState.ROWS; y++) {
+			for (int x = 0; x < GameState.COLS; x++) {
+				grid_cells[y][x] = new JTextField();
+				grid_cells[y][x].setDocument(new TextFieldLimit(1));
+				if (g.get()[y][x] == '#') {
+					grid_cells[y][x].setBackground(Color.BLACK);
+					grid_cells[y][x].setEditable(false);
+				} else if (g.get()[y][x] != '-') {
+					grid_cells[y][x].setText(g.get()[y][x] + "");
+					grid_cells[y][x].setBackground(Color.WHITE);
+				}
+				grid_cells[y][x].setHorizontalAlignment(JTextField.CENTER);
+				grid_cells[y][x].addMouseListener(new ComponentClickedListener());
+				grid_cells[y][x].addMouseMotionListener(new ComponentDraggedListener());
+				grid_cells[y][x].addMouseWheelListener(new ComponentZoomedListener());
+				grid_cells[y][x].getDocument().addDocumentListener(new TextFieldChangedListener());
+				this.add(grid_cells[y][x]);
+			}
+		}
+	}
+	
+	public void evaluate_cells() {
+		for (int y = 0; y < GameState.ROWS; y++) {
+			for (int x = 0; x < GameState.COLS; x++) {
+				if (g.get()[y][x] == '#') continue;
+				if (g.get()[y][x] != GameState.SOLVED_GRID.get()[y][x]) {
+					grid_cells[y][x].setBackground(Color.RED);
+				} else {
+					grid_cells[y][x].setBackground(Color.GREEN);
+				}
 			}
 		}
 	}

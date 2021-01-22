@@ -61,6 +61,7 @@ public class Grid {
 	
 	/**
 	 * @desc Fills grid with random black squares with passed percentage.
+	 * @pre grid has enough empty spaces
 	 * @env GameState.BLACK_SQUARES_PERCENTAGE, GameState.ROWS, GameState.COLS
 	 * @env this.g
 	 */
@@ -106,6 +107,7 @@ public class Grid {
 	/**
 	 * @desc Compares this grid with passed grid.
 	 * @return if grids are equal
+	 * @pre grids are of same sizes
 	 * @env GameState.ROWS, GameState.COLS
 	 * @env this.g
 	 */
@@ -152,6 +154,8 @@ public class Grid {
 	 * @param y - y coordinate
 	 * @param x - x coordinate
 	 * @param c - value
+	 * @pre x && y are within bounds
+	 * @pre c is a digit
 	 * @env this.g
 	 */
 	public void set(int y, int x, char c) {
@@ -175,6 +179,7 @@ public class Grid {
 	/**
 	 * @desc Get across values sorted by length.
 	 * @return across_values
+	 * @pre grid is filled (solved)
 	 * @env GameState.ROWS, GameState.COLS
 	 * @env this.g
 	 */
@@ -229,6 +234,7 @@ public class Grid {
 	/**
 	 * @desc Get down values sorted by length.
 	 * @return down_values
+	 * @pre grid is filled (solved)
 	 * @env GameState.ROWS, GameState.COLS
 	 * @env this.g
 	 */
@@ -277,7 +283,6 @@ public class Grid {
 			Collections.sort(down_values.get(key));
 			down_values.replace(key, values);
 		}
-		System.out.println();
 		return down_values;
 	}
 	

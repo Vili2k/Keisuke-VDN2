@@ -11,6 +11,7 @@ import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JSlider;
+import javax.swing.Timer;
 
 import logic.GameState;
 import logic.Grid;
@@ -61,6 +62,7 @@ public class SetupFrame extends JFrame {
 	 */
 	public SetupFrame() {
 		this.setTitle("Keisuke - Setup");
+		this.setIconImage(GameState.LOGO_ICON.getImage());
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		this.setSize(450, 210);
 		this.setResizable(false);
@@ -109,7 +111,7 @@ public class SetupFrame extends JFrame {
 		continue_button.addActionListener(e -> {
 			game_setup();
 			this.dispose();
-			new GameFrame();
+			GameState.GAME_FRAME = new GameFrame();
 		});
 		
 		JComponent[] components = {
@@ -135,7 +137,11 @@ public class SetupFrame extends JFrame {
 	
 	/**
 	 * @desc Set-up game state with chosen options.
-	 * @env
+	 * @env GameState.ROWS, GameState.COLS,
+	 * @env GameState.PLAYING_GRID, GameState.SOLVED_GRID,
+	 * @env GameState.ACROSS_VALUES, GameState.DOWN_VALUES,
+	 * @env GameState.BLACK_SQUARES_PERCENTAGE, GameState.ENDLESS, GameState.TIME
+	 * @env GameState.GAME_FRAME, GameState.SAVED, GameState.TIMER
 	 */
 	public void game_setup() {
 		GameState.ROWS = (int) this.rows_combobox.getSelectedItem();
@@ -148,6 +154,12 @@ public class SetupFrame extends JFrame {
 		GameState.SOLVED_GRID.fill_random();
 		GameState.ACROSS_VALUES = GameState.SOLVED_GRID.get_across();
 		GameState.DOWN_VALUES = GameState.SOLVED_GRID.get_down();
+		GameState.TIME = 0;
+		GameState.TIMER = new Timer(1000, e -> {
+			GameState.TIME++;
+		});
+		GameState.TIMER.start();
+		GameState.SAVED = false;
 	}
 	
 }

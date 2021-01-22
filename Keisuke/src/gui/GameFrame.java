@@ -1,25 +1,29 @@
 package gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.Timer;
 
 import logic.GameState;
-import logic.Grid;
 
 /**
  * @desc Frame that displays the game.
@@ -50,7 +54,7 @@ public class GameFrame extends JFrame {
 	/**
 	 * @desc Labels.
 	 */
-	private JLabel across_label, down_label, across_values_label, down_values_label, time_label;
+	private JLabel across_label, down_label, across_values_label, down_values_label, time_label, endless_label;
 	
 	/**
 	 * @desc Combo boxes for displaying values of selected length.
@@ -64,12 +68,13 @@ public class GameFrame extends JFrame {
 
 	/**
 	 * @desc Preparing and adding components to game frame.
-	 * @env this.grid_panel, this.values_panel, this.buttons_panel
+	 * @env this.grid_panel
 	 */
 	public GameFrame() {
 		this.setTitle("Keisuke - Game");
-		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		this.setSize(500, 500);
+		this.setIconImage(GameState.LOGO_ICON.getImage());
+		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		this.setSize(600, 600);
 		this.setExtendedState(JFrame.MAXIMIZED_BOTH);
 		this.setResizable(true);
 		this.setLocationRelativeTo(null);
@@ -78,29 +83,38 @@ public class GameFrame extends JFrame {
 	            grid_panel.update_bounds();
 	        }
 		});
+		this.addWindowListener(new WindowAdapter() {
+		    public void windowClosing(WindowEvent windowEvent) {
+		    	if (GameState.SAVED) {
+		    		GameState.GAME_FRAME.dispose();
+		    		System.exit(0);
+					GameState.TIMER.stop();
+		    	} else {
+		    		new SaveFrame(true);
+		    	}
+		    }
+		});
 		
 		grid_panel = new GridPanel(GameState.PLAYING_GRID);
+		this.add(grid_panel, BorderLayout.CENTER);
+		
 		setup_values_panel();
 		setup_header_panel();
 		
-		this.add(grid_panel, BorderLayout.CENTER);
-		this.add(new JScrollPane(values_panel, 
-				JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
-				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), 
-				BorderLayout.SOUTH);
-		this.add(header_panel, BorderLayout.NORTH);
-		
 		this.setVisible(true);
+		
+		grid_panel.game_update();
 	}
 	
 	/**
 	 * @desc Set-up values panel.
 	 * @env GameState.ACROSS_VALUES, GameState.DOWN_VALUES
 	 * @env this.values_panel
-	 * @env this.across_label, this.down_label, this.across_values_label, this.down_values_label
+	 * @env this.across_label, this.down_label, 
+	 * @env this.across_values_label, this.down_values_label,
 	 * @env this.across_combobox, this.down_combobox
 	 */
-	public void setup_values_panel() {
+	private void setup_values_panel() {
 		values_panel = new JPanel();
 		values_panel.setLayout(new BoxLayout(values_panel, BoxLayout.Y_AXIS));
 		values_panel.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -194,13 +208,19 @@ public class GameFrame extends JFrame {
 		values_panel.add(down_header_panel);
 		values_panel.add(down_values_label);
 		values_panel.add(new JLabel(" "));
+		
+		this.add(new JScrollPane(values_panel, 
+				JScrollPane.VERTICAL_SCROLLBAR_NEVER, 
+				JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED), 
+				BorderLayout.SOUTH);
 	}
 	
 	/**
 	 * @desc Set-up header panel.
 	 * @env this.header_panel
-	 * @env this.time_label
-	 * @env this.menu_button, this.save_button, this.hint_button, this.solution_button, this.reset_button
+	 * @env this.time_label, this.endless_label
+	 * @env this.menu_button, this.save_button, this.hint_button
+	 * @env this.solution_button, this.reset_button
 	 */
 	private void setup_header_panel() {
 		JPanel buttons_panel = new JPanel();
@@ -219,11 +239,22 @@ public class GameFrame extends JFrame {
 		solution_button.setFocusable(false);
 		
 		menu_button.addActionListener(e -> {
-			this.dispose();
-			new MenuFrame();
+			if (GameState.SAVED) {
+				save_game_state();
+				this.dispose();
+				new MenuFrame();
+			} else {
+				new SaveFrame(false);
+			}
+		});
+		save_button.addActionListener(e -> {
+			make_file();
 		});
 		reset_button.addActionListener(e -> {
 			grid_panel.reset();
+		});
+		hint_button.addActionListener(e -> {
+			grid_panel.evaluate_cells();
 		});
 		solution_button.addActionListener(e -> {
 			new SolutionFrame();
@@ -235,21 +266,98 @@ public class GameFrame extends JFrame {
 		buttons_panel.add(hint_button);
 		buttons_panel.add(solution_button);
 		
+		JPanel info_panel = new JPanel();
+		info_panel.setLayout(new FlowLayout(FlowLayout.RIGHT));
+		
 		time_label = new JLabel();
-		Timer t = new Timer(1000, e -> {
-			GameState.TIME++;
+		int h = GameState.TIME / 3600;
+		int m = (GameState.TIME - h * 3600) / 60;
+		int s = GameState.TIME - h * 3600 - m * 60;
+		time_label.setText("Time: " + ((h > 0) ? (h + ":") : "") 
+				+ ((m > 0) ? (m + ":") : "") + s + " ");
+		Timer t = new Timer(100, e -> {
 			int hours = GameState.TIME / 3600;
 			int minutes = (GameState.TIME - hours * 3600) / 60;
 			int seconds = GameState.TIME - hours * 3600 - minutes * 60;
-			time_label.setText(((hours > 0) ? (hours + ":") : "") + ((minutes > 0) ? (minutes + ":") : "") + seconds + " ");
+			time_label.setText("Time: " + ((hours > 0) ? (hours + ":") : "") 
+					+ ((minutes > 0) ? (minutes + ":") : "") + seconds + " ");
 		});
 		t.start();
+		
+		endless_label = new JLabel();
+		if (GameState.ENDLESS) endless_label.setText("Endless mode: ON    ");
+		else endless_label.setText("Endless mode: OFF    ");
+		
+		info_panel.add(endless_label);
+		info_panel.add(time_label);
 		
 		header_panel = new JPanel();
 		header_panel.setLayout(new BorderLayout());
 		
 		header_panel.add(buttons_panel);
-		header_panel.add(time_label, BorderLayout.EAST);
+		header_panel.add(info_panel, BorderLayout.EAST);
+		
+		this.add(header_panel, BorderLayout.NORTH);
+	}
+	
+	/**
+	 * @desc Creates a game file.
+	 * @env GameState.SAVED,
+	 * @env this.save_button
+	 */
+	public void make_file() {
+		JFileChooser fileChooser = new JFileChooser("saves/");
+		if (fileChooser.showSaveDialog(save_button) == JFileChooser.APPROVE_OPTION) {
+			GameState.FILE = fileChooser.getSelectedFile();
+			if (GameState.FILE  == null) {
+				return;
+			}
+			if (!GameState.FILE .getName().toLowerCase().endsWith(".txt")) {
+				GameState.FILE  = new File(GameState.FILE .getParentFile(),
+						GameState.FILE .getName() + ".txt");
+			}
+			save_game_state();
+			GameState.SAVED = true;
+		}
+	}
+	
+	/**
+	 * @desc Saves game state to file.
+	 * @pre The file exists.
+	 * @env GameState.FILE, GameState.ROWS, GameState.COLS,
+	 * @env GameState.PLAYING_GRID, GameState.SOLVED_GRID,
+	 * @env GameState.ENDLESS, GameState.TIME, GameState.BLACK_SQUARES_PERCENTAGE
+	 */
+	public void save_game_state() {
+		try {
+			BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(
+					new FileOutputStream(GameState.FILE ), "utf-8"));		
+			writer.flush();	
+			for (int y = 0; y < GameState.ROWS; y++) {
+				String row = "";
+				for (int x = 0; x < GameState.COLS; x++) {
+					row += GameState.PLAYING_GRID.get()[y][x] + " ";
+				}
+				writer.write(row.trim() + "\n");
+			}
+			writer.write("\n");
+			
+			for (int y = 0; y < GameState.ROWS; y++) {
+				String row = "";
+				for (int x = 0; x < GameState.COLS; x++) {
+					row += GameState.SOLVED_GRID.get()[y][x] + " ";
+				}
+				writer.write(row.trim() + "\n");
+			}
+			writer.write("\n");
+			writer.write(GameState.BLACK_SQUARES_PERCENTAGE + "\n");
+			writer.write(GameState.ENDLESS + "\n");
+			writer.write(GameState.TIME + "\n");
+			
+			writer.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 }

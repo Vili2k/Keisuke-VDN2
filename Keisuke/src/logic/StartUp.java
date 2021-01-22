@@ -1,5 +1,7 @@
 package logic;
 
+import javax.swing.ImageIcon;
+
 import gui.MenuFrame;
 
 /**
@@ -17,6 +19,7 @@ public class StartUp {
 		GameState.MIN_COLS = 4;
 		GameState.MAX_ROWS = 20;
 		GameState.MAX_COLS = 20;
+		GameState.LOGO_ICON = new ImageIcon("src/imgs/ke.png");
 		new MenuFrame();
 	}
 	

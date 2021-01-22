@@ -1,13 +1,24 @@
 package logic;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.TreeMap;
+
+import javax.swing.ImageIcon;
+import javax.swing.Timer;
+
+import gui.GameFrame;
 
 /**
  * @desc Game state of the program.
  * @author vilip
  */
 public abstract class GameState {
+	
+	/**
+	 * @desc Contains logo image.
+	 */
+	public static ImageIcon LOGO_ICON;
 	
 	/**
 	 * @desc Defines minimum and maximum number of grid rows and columns.
@@ -40,8 +51,28 @@ public abstract class GameState {
 	public static TreeMap<Integer, ArrayList<String>> ACROSS_VALUES, DOWN_VALUES;
 	
 	/**
+	 * @desc Contains main GameFrame reference.
+	 */
+	public static GameFrame GAME_FRAME;
+	
+	/**
+	 * @desc Game timer.
+	 */
+	public static Timer TIMER;
+	
+	/**
 	 * @desc Contains time since start.
 	 */
 	public static int TIME;
+	
+	/**
+	 * @desc Contains game saved state.
+	 */
+	public static boolean SAVED;
+	
+	/**
+	 * @desc File in which game is saved.
+	 */
+	public static File FILE;
 	
 }

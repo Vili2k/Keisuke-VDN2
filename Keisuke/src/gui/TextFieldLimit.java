@@ -4,7 +4,7 @@ import javax.swing.text.PlainDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
 
-public class JTextFieldLimit extends PlainDocument {
+public class TextFieldLimit extends PlainDocument {
 	
  	/**
 	 * @desc Randomly generated serial version UID.
@@ -13,7 +13,7 @@ public class JTextFieldLimit extends PlainDocument {
 	
 	private int limit;
 
-	JTextFieldLimit(int limit) {
+	TextFieldLimit(int limit) {
 		super();
 		this.limit = limit;
 	}
